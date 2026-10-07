@@ -1,0 +1,814 @@
+/* ══════════════════════════════════════════════════════════
+   HOME PAGE
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Hero Banner ─────────────────────────────────────────── */
+/* Hero lives inside .container so it is never full-width */
+.home-hero {
+  background: rgba(237, 200, 174, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 7;
+  text-align: center;
+  margin-top: 15px;
+  margin-bottom: 28px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Carousel variant ────────────────────────────────────── */
+.home-hero--carousel {
+  cursor: default;
+}
+
+/* Slide stack — all positioned absolute, only active is visible */
+.home-hero-slides {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ── Slide backgrounds — only show image once it's ready ─── */
+.home-hero-slide {
+  position: absolute;
+  inset: 0;
+  background: rgba(237, 200, 174, 0.45);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+/* Image painted but not yet active: keep invisible */
+.home-hero-slide--ready {
+  /* background-image is set inline but we reveal it only when active */
+}
+
+.home-hero-slide--active {
+  opacity: 1;
+}
+
+/* Scrim removed — no overlay on hero images */
+
+/* Content layer */
+.home-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Carousel text color — data attribute on the section toggles dark/light */
+/* Default: white text (most slides have an image) */
+.home-hero--carousel .home-hero-label,
+.home-hero--carousel .home-hero-sub {
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.55);
+}
+
+/* No-image slide: dark text */
+.home-hero--carousel[data-has-image="false"] .home-hero-label,
+.home-hero--carousel[data-has-image="false"] .home-hero-sub {
+  color: var(--text);
+  text-shadow: none;
+}
+
+/* Arrow buttons — hidden by default, fade in on carousel hover */
+.home-hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(4px);
+  border: none;
+  border-radius: var(--radius-full);
+  width: 40px;
+  height: 40px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.22s ease, background 0.18s ease;
+}
+
+.home-hero--carousel:hover .home-hero-arrow {
+  opacity: 1;
+}
+
+.home-hero-arrow:hover {
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.home-hero-arrow svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.home-hero-arrow--prev { left: 12px; }
+.home-hero-arrow--next { right: 12px; }
+
+/* Dot indicators */
+.home-hero-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.home-hero-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.home-hero-dot--active {
+  background: #fff;
+  transform: scale(1.35);
+}
+
+.home-hero-link {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  position: relative;
+  z-index: 1;
+}
+
+.home-hero-inner {
+  padding: 32px 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.home-hero-label {
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.home-hero-sub {
+  font-size: clamp(22px, 4vw, 38px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .home-hero-arrow {
+    width: 32px;
+    height: 32px;
+  }
+  .home-hero-arrow--prev { left: 6px; }
+  .home-hero-arrow--next { right: 6px; }
+}
+
+/* ── Category Quick Links ────────────────────────────────── */
+.home-categories {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.home-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.home-cat-item {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* Showcase item: covers full cell with image */
+.home-cat-item--showcase {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  text-decoration: none;
+  background: rgba(237, 200, 174, 0.35);
+  transition: filter 0.18s;
+}
+
+.home-cat-item--showcase:hover {
+  filter: brightness(0.9);
+}
+
+.home-cat-item-label {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 8px 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.home-cat-placeholder { background: rgba(237, 200, 174, 0.5); }
+
+/* Shimmer animation for placeholder cells while data is loading */
+@keyframes home-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.home-cat-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(237, 200, 174, 0.35) 25%,
+    rgba(237, 200, 174, 0.65) 50%,
+    rgba(237, 200, 174, 0.35) 75%
+  );
+  background-size: 800px 100%;
+  animation: home-shimmer 1.4s infinite linear;
+}
+
+/* Design item image — starts invisible, fades in once loaded */
+.home-cat-item-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.35s ease-in;
+}
+
+.home-cat-item-img.loaded {
+  opacity: 1;
+}
+
+/* Category section banner background — starts invisible, fades in once image loads */
+.home-section-banner-bg {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(237, 200, 174, 0.5);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.4s ease-in;
+}
+
+.home-section-banner-bg.loaded {
+  opacity: 1;
+}
+
+.home-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.home-search-greeting { font-size: 16px; white-space: nowrap; }
+
+.home-search-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  min-width: 200px;
+}
+
+.home-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 10px 14px;
+  font-size: 15px;
+  background: #fff;
+  color: var(--text);
+}
+
+.home-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--brand-brown);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── Search Dropdown ─────────────────────────────────────── */
+.home-search-input-wrap {
+  position: relative;
+}
+
+.home-search-dropdown-wrapper {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.home-search-dropdown {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  overflow: hidden;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.home-search-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--text);
+  border-bottom: 1px solid var(--gray-bg-2);
+  transition: background 0.12s;
+}
+
+.home-search-dropdown-item:hover {
+  background: #faf7f4;
+}
+
+.home-search-dropdown-item img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  background: rgba(237, 200, 174, 0.35);
+}
+
+.home-search-dropdown-info {
+  min-width: 0;
+}
+
+.home-search-dropdown-name {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-search-dropdown-name .search-highlight {
+  background: rgba(237, 200, 174, 0.6);
+  color: var(--text);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.home-search-dropdown-category {
+  font-size: 12px;
+  color: var(--gray-mid);
+  margin-top: 2px;
+}
+
+.home-search-dropdown-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--gray-mid);
+  font-size: 14px;
+}
+
+.home-search-dropdown-more {
+  padding: 10px 14px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--gray-light);
+  background: var(--gray-bg-3);
+}
+
+/* ── Custom Order ────────────────────────────────────────── */
+.home-custom-order {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 32px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.home-custom-drop {
+  position: relative;
+  width: 200px;
+  flex-shrink: 0;
+  background: rgba(237, 200, 174, 0.45);
+  border-right: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  min-height: 180px;
+}
+
+.home-custom-info {
+  flex: 1;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-custom-title { font-size: 20px; font-weight: 800; margin: 0; }
+
+.home-custom-desc { font-size: 14px; color: var(--muted); margin: 0; }
+
+.home-custom-btn {
+  align-self: flex-start;
+  margin-top: 8px;
+  background: var(--brand-brown);
+  color: #fff;
+  border-color: transparent;
+  padding: 12px 32px;
+  font-size: 15px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PRODUCT SECTIONS  (zig-zag layout)
+   ══════════════════════════════════════════════════════════ */
+
+.home-product-section {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;   /* banner stretches to match grid height */
+  margin-bottom: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* ── Category Banner ─────────────────────────────────────── */
+.home-section-banner-wrap {
+  /* Width is set proportionally: 1 column out of (COLS+1) total columns */
+  flex: 0 0 calc((100% - 16px) / 5);  /* 1 of 5 equal parts (4 products + 1 banner) */
+  min-width: 140px;
+  display: flex;
+}
+
+.home-section-banner {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  background: rgba(237, 200, 174, 0.5);
+  border-radius: 0;
+  transition: filter 0.2s;
+}
+
+.home-section-banner:hover { filter: brightness(0.95); }
+
+.home-section-banner-label {
+  position: relative;
+  z-index: 1;
+  padding: 14px 16px;
+  background: linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-section-banner-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+.home-section-banner-cta {
+  font-size: 12px;
+  color: rgba(255,255,255,0.85);
+  font-weight: 600;
+}
+
+/* ── Product Grid inside section ─────────────────────────── */
+.home-section-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  padding: 12px 12px 12px 0; /* padding so cards don't touch the border; banner still flush */
+}
+
+/* Reverse: padding flips sides */
+.home-product-section--reverse .home-section-grid {
+  padding: 12px 0 12px 12px;
+}
+
+.home-section-grid .product-card {
+  border-radius: 0;
+  border: none;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+}
+
+/* Remove right border on last column */
+.home-section-grid .product-card:nth-child(4n) {
+  border-right: none;
+}
+
+/* Remove bottom border on last row */
+.home-section-grid .product-card:nth-last-child(-n+4) {
+  border-bottom: none;
+}
+
+.home-section-grid .product-card-link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.home-section-grid .product-card-media {
+  aspect-ratio: 1 / 1;
+  background: rgba(237, 200, 174, 0.35);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.home-section-grid .product-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* fade-in is handled by .img-loaded class from products.css */
+}
+
+.home-section-grid .product-card-body {
+  padding: 10px 12px 12px;
+  flex: 1;
+}
+
+.home-section-grid .product-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.home-section-grid .product-card-price {
+  font-size: 13px;
+  color: #2196f3;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ── Reverse variant: banner on right ────────────────────── */
+/* No extra CSS needed — JS puts gridEl first, bannerEl second.
+   We just need to make sure the banner border is on the left, not right. */
+.home-product-section--reverse .home-section-banner-wrap {
+  border-left: 1px solid var(--border);
+  border-right: none;
+}
+
+.home-product-section:not(.home-product-section--reverse) .home-section-banner-wrap {
+  border-right: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Tablet (≤ 1023px) ───────────────────────────────────── */
+@media (max-width: 1023px) {
+  /* Design showcase stays 4-across on tablet so the row never wraps */
+  .home-cat-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+}
+
+/* ── Tablet products grid (≤ 900px) ─────────────────────── */
+@media (max-width: 900px) {
+  .home-section-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Fix border logic for 2-col grid */
+  .home-section-grid .product-card:nth-child(4n) {
+    border-right: 1px solid var(--border);
+  }
+  .home-section-grid .product-card:nth-child(2n) {
+    border-right: none;
+  }
+  .home-section-grid .product-card:nth-last-child(-n+4) {
+    border-bottom: 1px solid var(--border);
+  }
+  .home-section-grid .product-card:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+}
+
+/* ── Mobile (≤ 600px) ────────────────────────────────────── */
+@media (max-width: 600px) {
+
+  /* ── Hero carousel: height driven by aspect-ratio, no fixed heights ── */
+
+  /* Always show arrows on touch — hover doesn't work on mobile */
+  .home-hero-arrow {
+    opacity: 1;
+    width: 32px;
+    height: 32px;
+  }
+
+  .home-hero-arrow--prev { left: 6px; }
+  .home-hero-arrow--next { right: 6px; }
+
+  /* Dots: larger tap target */
+  .home-hero-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .home-hero-dots {
+    bottom: 8px;
+    gap: 8px;
+  }
+
+  /* ── Design showcase: keep 4-across (never wraps to a new row) ── */
+  .home-cat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .home-cat-item {
+    aspect-ratio: 4 / 3;
+  }
+
+  .home-cat-item-label {
+    font-size: 10px;
+    padding: 4px 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Custom order: stack ── */
+  .home-custom-order {
+    flex-direction: column;
+  }
+
+  .home-custom-drop {
+    width: 100%;
+    min-height: 120px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Product sections: stack vertically ── */
+  .home-product-section {
+    flex-direction: column;
+  }
+
+  /* Reverse: banner still goes on top when stacked */
+  .home-product-section--reverse {
+    flex-direction: column-reverse;
+  }
+
+  /* Category banner: full-width strip on mobile */
+  .home-section-banner-wrap {
+    flex: none !important;
+    width: 100% !important;
+    min-width: unset !important;
+    height: 180px !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+
+  .home-section-banner {
+    min-height: 180px;
+  }
+
+  /* Product grid inside section stays 2-col */
+  .home-section-grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 8px !important;
+  }
+
+  .home-section-grid .product-card:nth-child(4n) {
+    border-right: 1px solid var(--border);
+  }
+  .home-section-grid .product-card:nth-child(2n) {
+    border-right: none;
+  }
+  .home-section-grid .product-card:nth-last-child(-n+4) {
+    border-bottom: 1px solid var(--border);
+  }
+  .home-section-grid .product-card:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+
+  /* Search row: stack on very small screens */
+  .home-search-greeting {
+    display: none; /* save space on mobile */
+  }
+
+  .home-search-input-wrap {
+    min-width: unset;
+  }
+}
+
+/* ── Drop zone: file preview ─────────────────────────────── */
+.home-custom-drop-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  background: rgba(245, 245, 245, 0.92); /* white-ish grey */
+  position: relative;
+}
+
+.home-custom-drop-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-xs);
+  position: absolute;
+  inset: 0;
+}
+
+.home-custom-drop-file-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.home-custom-drop-filename {
+  font-size: 12px;
+  color: #555;
+  text-align: center;
+  word-break: break-all;
+  max-width: 100%;
+  padding: 0 8px;
+  position: relative;
+  z-index: 1;
+  background: rgba(255,255,255,0.8);
+  border-radius: var(--radius-xs);
+  padding: 2px 6px;
+}
+
+.home-custom-drop-clear {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid #ccc;
+  border-radius: var(--radius-full);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  color: #555;
+  line-height: 1;
+}
+
+.home-custom-drop-clear:hover {
+  background: #fff;
+  color: var(--color-alert);
+  border-color: var(--color-alert);
+}

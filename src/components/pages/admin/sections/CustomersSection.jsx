@@ -1,0 +1,356 @@
+/**
+ * CustomersSection.jsx — Read-only customer list with search, pagination, and delete (owner only).
+ *
+ * Requirements: 9.2, 16.4
+ *
+ * Permissions:
+ *  - owner : dapat melihat daftar DAN menghapus akun
+ *  - admin  : hanya bisa melihat daftar
+ */
+
+import { useState, useEffect, useContext, useCallback } from 'react';
+import { listCustomers, deleteUser } from '../../../../services/auth.js';
+import { AuthContext } from '../../../context/AuthContext.jsx';
+import { track } from '../../../../utils/activityTracker.js';
+import { getSocket } from '../../../../core/socket.js';
+import PaginationBar from '../../../ui/PaginationBar.jsx';
+import CreateCustomerAccountModal from './CreateCustomerAccountModal.jsx';
+
+const PAGE_SIZE = 10;
+
+const ROLE_LABELS = {
+  customer:    'Customer',
+  admin:       'Admin',
+  owner:       'Owner',
+  cashier:     'Cashier',
+  cs:          'CS',
+  operational: 'Operational',
+  qc:          'QC',
+  offline:     'Offline',
+};
+
+// ---------------------------------------------------------------------------
+// DeleteUserModal — popup konfirmasi hapus akun, hanya muncul untuk owner
+// ---------------------------------------------------------------------------
+function DeleteUserModal({ customer, onConfirm, onCancel, deleting }) {
+  const joinDate = customer.created_at
+    ? new Date(customer.created_at).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : '—';
+
+  return (
+    <div
+      className="adm-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-user-title"
+    >
+      <div className="adm-modal">
+        {/* Header */}
+        <h3 className="adm-modal-title" id="delete-user-title" style={{ color: '#c0392b' }}>
+          ⚠ Hapus Akun
+        </h3>
+
+        {/* Data akun */}
+        <div
+          className="adm-modal-body"
+          style={{
+            background: 'var(--gray-bg-3)',
+            border: '1px solid #e0e0e0',
+            borderRadius: '6px',
+            padding: '12px 14px',
+            marginBottom: '12px',
+            fontSize: '0.9rem',
+            lineHeight: '1.7',
+          }}
+        >
+          <div><span style={{ color: '#666', minWidth: 80, display: 'inline-block' }}>Nama</span>: <strong>{customer.name || '—'}</strong></div>
+          <div><span style={{ color: '#666', minWidth: 80, display: 'inline-block' }}>Email</span>: {customer.email}</div>
+          <div><span style={{ color: '#666', minWidth: 80, display: 'inline-block' }}>Telepon</span>: {customer.phone || '—'}</div>
+          <div><span style={{ color: '#666', minWidth: 80, display: 'inline-block' }}>Role</span>: {ROLE_LABELS[customer.role] ?? customer.role}</div>
+          <div><span style={{ color: '#666', minWidth: 80, display: 'inline-block' }}>Bergabung</span>: {joinDate}</div>
+        </div>
+
+        {/* Peringatan */}
+        <p
+          className="adm-modal-body"
+          style={{
+            color: '#c0392b',
+            fontSize: '0.85rem',
+            background: '#fff5f5',
+            border: '1px solid #f5c6cb',
+            borderRadius: '6px',
+            padding: '10px 12px',
+          }}
+        >
+          <strong>Peringatan:</strong> Tindakan ini akan menonaktifkan akun secara permanen.
+          Semua data terkait akun ini (riwayat pesanan, chat, dll.) tidak akan dapat diakses
+          oleh pengguna. Tindakan ini <strong>tidak dapat dibatalkan</strong>.
+        </p>
+
+        <div className="adm-modal-actions">
+          <button
+            className="adm-btn adm-btn-secondary"
+            type="button"
+            onClick={onCancel}
+            disabled={deleting}
+          >
+            Batal
+          </button>
+          <button
+            className="adm-btn adm-btn-danger"
+            type="button"
+            onClick={onConfirm}
+            disabled={deleting}
+          >
+            {deleting ? 'Menghapus…' : 'Ya, Hapus Akun'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CustomersSection
+// ---------------------------------------------------------------------------
+export default function CustomersSection() {
+  const { user: currentUser } = useContext(AuthContext);
+
+  const [allCustomers, setAllCustomers] = useState([]);
+  const [searchQuery, setSearchQuery]   = useState('');
+  const [currentPage, setCurrentPage]   = useState(1);
+
+  // Delete state (owner only)
+  const [pendingDelete, setPendingDelete] = useState(null); // customer object
+  const [deleting, setDeleting]           = useState(false);
+
+  // Create state (owner, admin, cs)
+  const [showCreateCustomer, setShowCreateCustomer] = useState(false);
+
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', message }
+
+  // Hanya owner yang bisa hapus akun
+  const isOwner     = currentUser?.role === 'owner';
+  const canDelete     = isOwner;
+  // Owner, admin, dan cs bisa buat akun customer
+  const canCreateCustomer = ['owner', 'admin', 'cs'].includes(currentUser?.role);
+
+  const loadCustomers = useCallback(async () => {
+    try {
+      const customers = await listCustomers();
+      setAllCustomers(Array.isArray(customers) ? customers : []);
+    } catch (err) {
+      console.error('Failed to load customers:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCustomers();
+  }, [loadCustomers]);
+
+  // Real-time: customer baru bisa muncul setelah order pertama → reload saat order:new
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    function handleOrderNew() {
+      loadCustomers();
+    }
+
+    socket.on('order:new', handleOrderNew);
+
+    return () => {
+      socket.off('order:new', handleOrderNew);
+    };
+  }, [loadCustomers]);
+
+  // Auto-dismiss toast setelah 3 detik
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const q        = searchQuery.toLowerCase();
+  const filtered = q
+    ? allCustomers.filter(
+        (u) =>
+          (u.name || '').toLowerCase().includes(q) ||
+          (u.email || '').toLowerCase().includes(q) ||
+          (u.phone || '').includes(q)
+      )
+    : allCustomers;
+
+  const total      = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage   = Math.min(currentPage, totalPages);
+  const items      = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  function handleSearchChange(e) {
+    setSearchQuery(e.target.value.trim());
+    setCurrentPage(1);
+  }
+
+  // --- Delete handlers (owner only) ---
+  function handleDeleteClick(customer) {
+    if (!isOwner) return;
+    setPendingDelete(customer);
+  }
+
+  async function handleConfirmDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      const result = await deleteUser(pendingDelete.id);
+      if (result.ok) {
+        track('Hapus Customer', {
+          targetType: 'customer', targetId: pendingDelete.id,
+          metadata: { name: pendingDelete.name ?? null, email: pendingDelete.email ?? null },
+        });
+        setAllCustomers((prev) => prev.filter((u) => u.id !== pendingDelete.id));
+        setToast({
+          type: 'success',
+          message: `Akun ${pendingDelete.name || pendingDelete.email} berhasil dihapus.`,
+        });
+      } else {
+        setToast({ type: 'error', message: result.message || 'Gagal menghapus akun.' });
+      }
+    } catch (err) {
+      console.error('deleteUser error:', err);
+      setToast({ type: 'error', message: 'Terjadi kesalahan. Coba lagi.' });
+    } finally {
+      setDeleting(false);
+      setPendingDelete(null);
+    }
+  }
+
+  // Hitung jumlah kolom untuk colspan empty state
+  const colCount = 4 + (canDelete ? 1 : 0);
+
+  return (
+    <div className="adm-card">
+      {/* Toast notification */}
+      {toast && (
+        <div
+          className={`adm-toast adm-toast--${toast.type}`}
+          role="status"
+          aria-live="polite"
+        >
+          {toast.message}
+        </div>
+      )}
+
+      <div className="adm-toolbar">
+        <h2 className="adm-section-title">Daftar Customer ({total})</h2>
+        <div className="adm-toolbar-right" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {canCreateCustomer && (
+            <button
+              className="adm-btn adm-btn--primary"
+              type="button"
+              onClick={() => setShowCreateCustomer(true)}
+              aria-label="Buat akun customer baru"
+            >
+              + Buat Customer
+            </button>
+          )}
+          <input
+            className="adm-input adm-search"
+            type="search"
+            placeholder="Cari nama / email / telepon…"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            aria-label="Cari customer"
+          />
+        </div>
+      </div>
+
+      <div className="adm-table-wrap">
+        <table className="adm-table">
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Email</th>
+              <th>Telepon</th>
+              <th>Bergabung</th>
+              {canDelete     && <th>Aksi</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan={colCount} className="adm-empty">
+                  Belum ada customer.
+                </td>
+              </tr>
+            ) : (
+              items.map((u) => (
+                <tr key={u.id}>
+                  <td>{u.name || '—'}</td>
+                  <td>{u.email}</td>
+                  <td>{u.phone || '—'}</td>
+                  <td className="adm-date">
+                    {u.created_at
+                      ? new Date(u.created_at).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })
+                      : '—'}
+                  </td>
+                  {canDelete && (
+                    <td>
+                      <button
+                        className="adm-btn adm-btn-danger adm-btn-sm"
+                        type="button"
+                        onClick={() => handleDeleteClick(u)}
+                        aria-label={`Hapus akun ${u.name || u.email}`}
+                      >
+                        Hapus
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <PaginationBar
+        page={safePage}
+        totalPages={totalPages}
+        total={total}
+        limit={PAGE_SIZE}
+        onPageChange={setCurrentPage}
+      />
+
+      {/* Modal konfirmasi hapus akun (owner only) */}
+      {pendingDelete && (
+        <DeleteUserModal
+          customer={pendingDelete}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setPendingDelete(null)}
+          deleting={deleting}
+        />
+      )}
+
+      {/* Modal buat akun customer (owner, admin, cs) */}
+      {showCreateCustomer && (
+        <CreateCustomerAccountModal
+          onClose={() => setShowCreateCustomer(false)}
+          onCreated={(cust) => {
+            setToast({
+              type: 'success',
+              message: `Akun customer ${cust.name || cust.email} berhasil dibuat.`,
+            });
+            loadCustomers();
+          }}
+        />
+      )}
+    </div>
+  );
+}
